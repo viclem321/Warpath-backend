@@ -1,12 +1,18 @@
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using GameServer.Datas;
 using GameServer.Services;
-using GameServer.datas;
 
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddDbContext<GameDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddScoped<GlobalServices>();
-builder.Services.AddControllers();
+//BDD
+builder.Services.Configure<MongoDBSettings>(builder.Configuration.GetSection("MongoDB"));
+builder.Services.AddSingleton<MongoDBContext>();  // Ajoute MongoDBContext
+//Services
+builder.Services.AddSingleton<VillageServices>();
+//Controllers
+builder.Services.AddControllers().AddNewtonsoftJson(options => { options.SerializerSettings.TypeNameHandling = TypeNameHandling.None; });
+//build
 var app = builder.Build();
 
 

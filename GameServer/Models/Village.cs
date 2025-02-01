@@ -1,31 +1,52 @@
-using System.Numerics;
+using MongoDB.Bson;
+using MongoDB.Bson.Serialization.Attributes;
+using MongoDB.Driver;
+using GameServer.DTOs;
 
-namespace GameServer.Models
-{
-    public class Village {
-        public int Id { get; set; }
-        public string owner {get; set; }
-        public int positionX {get; set; }
-        public int positionY { get; set; }
+namespace GameServer.Models;
+
+
+
+
+public class Village {
+    [BsonId]
+    public ObjectId _id { get; set; }
+    public string owner {get; set; }
+    public int positionX {get; set; }  public int positionY { get; set; }
+    //BUILDINGS
+    public List<Building> buildings { get; set; }
+
+
+    public Village(string pOwner, int pX, int pY){
+        //general (dont need to initialise Id)
+        owner = pOwner;
+        positionX = pX;   positionY = pY;
         //buildings
-        public int hqLevel { get; set; }
-        public int buildingWoodLevel { get; set; }   public int woodQuantity { get; set; }   public int woodProduction { get; set; }   public int woodCapacity { get; set; }   public DateTime woodLastHarvest { get; set; }
-        public int buildingFoodLevel { get; set; }   public int foodQuantity { get; set; }   public int foodProduction { get; set; }   public int foodCapacity { get; set; }   public DateTime foodLastHarvest { get; set; }
-        public int buildingOilLevel { get; set; }    public int oilQuantity { get; set; }    public int oilProduction { get; set; }   public int oilCapacity { get; set; }   public DateTime oilLastHarvest { get; set; }
-        public int academieLevel { get; set; }
-        public int entrepotLevel { get; set; }
+        buildings = new List<Building> { new Hq(), new Scierie(), new Ferme(), new Mine(), new Entrepot() };
+    }
 
-
-        public Village(){ }
-        public Village(string pOwner, int pX, int pY){
-            owner = pOwner;
-            positionX = pX;   positionY = pY;
-            //buildings
-            hqLevel = 1;
-            buildingWoodLevel = 0; woodQuantity = 0; woodProduction = 0;
-            buildingFoodLevel = 0; foodQuantity = 0; foodProduction = 0;
-            buildingOilLevel = 0; oilQuantity = 0;  oilProduction = 0;
-            academieLevel = 0; entrepotLevel = 0;
-        }
+    public VillageDto ToDto() {
+        return new VillageDto
+        {
+            id = this._id.ToString(),
+            owner = this.owner,
+            positionX = this.positionX,  positionY = this.positionY,
+            buildings = this.buildings?.Select(b => b.ToDto()).ToList()
+        };
     }
 }
+
+
+
+
+
+/*
+
+ALL BUILDINGS INDEX      
+    [0] = Hq
+    [1] = Scierie
+    [2] = Ferme
+    [3] = Mine
+    [4] = Entrepot
+
+*/
