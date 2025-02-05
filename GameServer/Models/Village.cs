@@ -28,10 +28,7 @@ public class Village {
     public VillageDto ToDto() {
         return new VillageDto
         {
-            id = this._id.ToString(),
-            owner = this.owner,
-            positionX = this.positionX,  positionY = this.positionY,
-            buildings = this.buildings?.Select(b => b.ToDto()).ToList()
+            id = this._id.ToString(), owner = this.owner, positionX = this.positionX,  positionY = this.positionY, buildings = this.buildings?.Select(b => b.ToDto()).ToList()
         };
     }
 }

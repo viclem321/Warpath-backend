@@ -10,9 +10,6 @@ namespace GameServer.Models;
 
 
 
-
-[BsonDiscriminator(Required = true)]
-[BsonKnownTypes(typeof(Hq), typeof(Scierie), typeof(Ferme), typeof(Mine), typeof(Entrepot))]
 public abstract class Building {
     public string buildingType { get; set; }
     public int level { get; set; }
