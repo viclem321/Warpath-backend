@@ -9,7 +9,8 @@ namespace GameServer.Models;
 
 
 
-
+[BsonDiscriminator(Required = true)]
+[BsonKnownTypes(typeof(Hq), typeof(Scierie), typeof(Ferme), typeof(Mine), typeof(Entrepot))] 
 public abstract class Building {
     public string buildingType { get; set; }
     public int level { get; set; }
@@ -27,6 +28,7 @@ public abstract class Building {
 
 
 
+[BsonDiscriminator("Hq")]
 public class Hq : Building {
 
     public Hq() { }
@@ -36,6 +38,7 @@ public class Hq : Building {
     }
 }
 
+[BsonDiscriminator("Scierie")]
 public class Scierie : Building {
     public int quantity { get; set; }
     public DateTime lastHarvest  { get; set; }
@@ -48,6 +51,7 @@ public class Scierie : Building {
     }
 }
 
+[BsonDiscriminator("Ferme")]
 public class Ferme : Building {
     public int quantity { get; set; }
     public DateTime lastHarvest { get; set; }
@@ -60,6 +64,7 @@ public class Ferme : Building {
     }
 }
 
+[BsonDiscriminator("Mine")]
 public class Mine : Building {
     public int quantity { get; set; }
     public DateTime lastHarvest { get; set; }
@@ -72,6 +77,7 @@ public class Mine : Building {
     }
 }
 
+[BsonDiscriminator("Entrepot")]
 public class Entrepot : Building {
     public int woodQuantity { get; set; } public int foodQuantity { get; set; } public int oilQuantity { get; set; }
 
@@ -82,3 +88,11 @@ public class Entrepot : Building {
         return new EntrepotDTO { buildingType = this.buildingType, level = this.level, woodQuantity = this.woodQuantity, foodQuantity = this.foodQuantity, oilQuantity = this.oilQuantity, };
     }
 }
+
+
+
+
+
+
+
+public enum BuildingType { Hq = 0, Scierie = 1, Ferme = 2, Mine = 3, Entrepot = 4 }

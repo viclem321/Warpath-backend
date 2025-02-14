@@ -10,13 +10,14 @@ namespace GameServer.Models;
 public class Player
 {
     [BsonId]
-    public ObjectId _id { get; set; }
-    public string pseudo { get; set; }
-    public List<ObjectId> allVillages { get; set; }
+    public string pseudo;  // index
+    public int lockUntil;
+    public List<int> allMapVillages;
 
-    public Player(string pPseudo, List<ObjectId>? pListVillages) {
+    public Player(string pPseudo, List<int> pListMapVillages) {
+        lockUntil = 0;
         pseudo = pPseudo;
-        allVillages = pListVillages ?? new List<ObjectId>();
+        allMapVillages = pListMapVillages;
     }
 
 
@@ -24,9 +25,8 @@ public class Player
     public PlayerDto ToDto() {
         return new PlayerDto
         {
-            id = this._id.ToString(),
             pseudo = this.pseudo,
-            allVillages = this.allVillages?.Select(v => v.ToString()).ToList()
+            allMapVillages = this.allMapVillages
         };
     }
 

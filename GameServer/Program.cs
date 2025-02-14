@@ -28,13 +28,14 @@ builder.Services.AddAuthentication(options =>
 //Services
 builder.Services.AddSingleton<L1UserServices>();
 builder.Services.AddSingleton<L2PlayerServices>();
-builder.Services.AddSingleton<L3VillageServices>();
+builder.Services.AddSingleton<L3MapServices>();
+builder.Services.AddSingleton<L4VillageServices>();
 //Controllers
 builder.Services.AddControllers().AddNewtonsoftJson(options => { options.SerializerSettings.TypeNameHandling = TypeNameHandling.None; });
 //build
 var app = builder.Build();
-
-
+//instanciation des services Singleton
+var userService = app.Services.GetRequiredService<L1UserServices>();var playerService = app.Services.GetRequiredService<L2PlayerServices>(); var mapService = app.Services.GetRequiredService<L3MapServices>();  var villageService = app.Services.GetRequiredService<L4VillageServices>();
 
 
 

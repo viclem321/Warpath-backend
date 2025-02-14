@@ -9,13 +9,14 @@ namespace GameServer.Models;
 public class User
 {
     [BsonId]
-    public ObjectId Id { get; set; }
+    public string username;  // index
+    public int lockUntil;
+    public string passwordHash;
+    public string player;
 
-    [BsonElement("username")]
-    public string? Username { get; set; }
-
-    [BsonElement("passwordHash")]
-    public string? PasswordHash { get; set; }
-
-    public ObjectId? playerId { get; set; }
+    public User(string pUsername, string pPasswordHash, string pPlayer) {
+        lockUntil = 0;
+        username = pUsername;  passwordHash = pPasswordHash;
+        player = pPlayer;
+    }
 }

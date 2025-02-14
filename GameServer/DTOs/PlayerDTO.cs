@@ -6,8 +6,7 @@ namespace GameServer.DTOs;
 
 public class PlayerDto
 {
-    public string? id { get; set; }
     public string? pseudo { get; set; }
-    public List<string>? allVillages { get; set; }
+    public List<int>? allMapVillages { get; set; }
 
 }

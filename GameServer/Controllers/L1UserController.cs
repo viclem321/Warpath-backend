@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using GameServer.Services;
+using GameServer.Models;
 using GameServer.DTOs;
 
 namespace GameServer.Controllers;
@@ -37,11 +38,28 @@ public class L1UserController : ControllerBase
 
 
 
-    [HttpPost("user/{userId}/createPlayer")]
+    [HttpPost("user/{userName}/createPlayer")]
     public async Task<IActionResult> CreatePlayer([FromBody] string newPseudo)
     {
-        PlayerDto? newPlayer = await _userServices.CreatePlayer(User, newPseudo);
-        if(newPlayer != null) { return Ok(newPlayer); } else { return BadRequest("Impossible de créer un nouveau Player.");}
+        // get identity of user and verify if there isnt already a player for this user
+        User? user = await _userServices.GetIdentityWithLock(User); if( user != null) {
+            PlayerDto? newPlayer = await _userServices.CreatePlayer(user, newPseudo); if(newPlayer != null) {
+                await _userServices.ReleaseLock(user);
+                return Ok(newPlayer);
+            }
+            await _userServices.ReleaseLock(user);
+        }
+        return BadRequest("Impossible de créer un nouveau Player.");
+    }
+
+    [HttpGet("user/{userName}/getPlayerName")]
+    public async Task<IActionResult> GetPlayerName()
+    {
+        User? user = await _userServices.GetIdentity(User); if( user != null) {
+            string playerName = _userServices.GetPlayerName(user);
+            if(playerName != "") { return Ok(playerName); }
+        }
+        return BadRequest("Impossible d'obtenir le Player pour cet user.");
     }
 
 }
