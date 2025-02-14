@@ -41,4 +41,4 @@ LES ENDPOINTS:
 
 NOTES PERSO : 
 
--Pour le moment, garder la Map en BDD dans un seul document, et possiblement à l'avenir séparer la Map en chunks, ou/et garder une copie de la Map en mémoire vive pour les accès en lecture.
+-Possiblement à l'avenir organiser la Map en chunks en BDD, ou/et garder une copie de la Map en mémoire vive pour les accès en lecture.
