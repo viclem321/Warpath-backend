@@ -30,12 +30,13 @@ builder.Services.AddSingleton<L1UserServices>();
 builder.Services.AddSingleton<L2PlayerServices>();
 builder.Services.AddSingleton<L3MapServices>();
 builder.Services.AddSingleton<L4VillageServices>();
+builder.Services.AddSingleton<L5BuildingServices>();
 //Controllers
 builder.Services.AddControllers().AddNewtonsoftJson(options => { options.SerializerSettings.TypeNameHandling = TypeNameHandling.None; });
 //build
 var app = builder.Build();
 //instanciation des services Singleton
-var userService = app.Services.GetRequiredService<L1UserServices>();var playerService = app.Services.GetRequiredService<L2PlayerServices>(); var mapService = app.Services.GetRequiredService<L3MapServices>();  var villageService = app.Services.GetRequiredService<L4VillageServices>();
+var userService = app.Services.GetRequiredService<L1UserServices>();var playerService = app.Services.GetRequiredService<L2PlayerServices>(); var mapService = app.Services.GetRequiredService<L3MapServices>();  var villageService = app.Services.GetRequiredService<L4VillageServices>(); var buildingService = app.Services.GetRequiredService<L5BuildingServices>();
 
 
 

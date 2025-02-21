@@ -27,18 +27,21 @@ LES ENDPOINTS:
     Create a player for a user (need token) : POST http://localhost:5245/api/user/{username}/createPlayer  (body : "pseudo")
     Get PlayerName of a user (need token): GET http://localhost:5245/api/user/{username}/getPlayerName
     Get all Datas about a player (need token + playerName) : GET http://localhost:5245/api/user/{username}/player/{playerName}/getDatas
-    Create a new village for a player (need token + playerName + newVillage location) : POST http://localhost:5245/api/user/{username}/player/{playerName}/createNewVillage   (body : { "locationX": {locX}, "locationY": {locY} }  )
-    Get basics informations about a mapTile if player have it in his vision (need token + playerName + location of the tile):  GET http://localhost:5245/api/user/{username}/player/{playerName}/map/getOneTile/{locX}&{locY}
+    Create a new village for a player (need token + playerName + newVillage location) : POST http://localhost:5245/api/user/{username}/player/{playerName}/createNewVillage   ( body : { indexNewVillage }  )
+    Delete a village  (need token + playerName + village location) : POST http://localhost:5245/api/user/{username}/player/{playerName}/deleteVillage   ( body : { indexVillage } )
+
+    Get basics informations about a mapTile if player have it in his vision (need token + playerName + location of the tile):  GET http://localhost:5245/api/user/{username}/player/{playerName}/map/{indexTile}/getOneTile
     Special endpoint for getting all the map:   GET http://localhost:5245/api/user/{username}/player/{playerName}/map/getAllMap
-    Special endpoint for getting all villages:   GET http://localhost:5245/api/user/{username}/player/{playerName}/map/{locX}&{locY}/village/getAllVillages
-    Get all datas about a village if owned by the player (need token + playerName + mapLocation): GET http://localhost:5245/api/user/{username}/player/{playerName}/map/{locX}&{locY}/village/getAllDatas
-    Upgrade a building inside a village if you are the owner of the village (need token + playerName + mapLocation + buildingType):  POST http://localhost:5245/api/user/{username}/player/{playerName}/map/{locX}&{locY}/village/upgradeBuilding   ( body: {buildingType} )
+    Special endpoint for getting all villages:   GET http://localhost:5245/api/user/{username}/player/{playerName}/map/{index}/village/getAllVillages
+    Get all datas about a village if owned by the player (need token + playerName + mapLocation): GET http://localhost:5245/api/user/{username}/player/{playerName}/map/{indexTile}/village/getAllDatas
+    
+    Upgrade a building inside a village if you are the owner of the village and if you have rss (need token + playerName + mapLocation + buildingType):  POST http://localhost:5245/api/user/{username}/player/{playerName}/map/{indexTile}/village/building/{buildingType}/upgradeBuilding   ( body: )
+    Send soldiers training in caserne (need token + playerName + mapLocation + nSoldiers):   POST http://localhost:5245/api/user/{username}/player/{playerName}/map/{indexTile}/village/building/caserne/trainingTroops/{nSoldats}
+    End training inside Caserne and send troops in CampMilitaire (need token + playerName + mapLocation):   POST http://localhost:5245/api/user/{username}/player/{playerName}/map/{indexTile}/village/building/caserne/endTraining
 
-
-
-
+    Attack a other village (need token + playerName + mapLocation + defenseurLocation + nSoldats):   POST http://localhost:5245/api/user/{username}/player/{playerName}/map/{indexTile}/attack/{indexTileToAttack}  ( body : { nSoldats }  )
 
 
 NOTES PERSO : 
 
--Possiblement à l'avenir organiser la Map en chunks en BDD, ou/et garder une copie de la Map en mémoire vive pour les accès en lecture.
+-Pour le moment, garder la Map en BDD dans un seul document, et possiblement à l'avenir séparer la Map en chunks, ou/et garder une copie de la Map en mémoire vive pour les accès en lecture.

@@ -47,7 +47,7 @@ public class L2PlayerServices {
                 var options = new FindOneAndUpdateOptions<Player> { ReturnDocument = ReturnDocument.After };
 
                 try { Player player = await _players.FindOneAndUpdateAsync(filter, update, options); if(player != null) { return player; } } catch { return null; }
-                Thread.Sleep(200); i++;
+                Thread.Sleep(100); i++;
             }
             Console.WriteLine("Impossible d'accéder à un joueur locked après 5 essaies."); return null;
     }
@@ -62,6 +62,13 @@ public class L2PlayerServices {
     }
 
 
+    public bool PlayerOwnATile(Player player, int indexMapTile)
+    {
+        foreach(var v in player.allMapVillages) {  if(v == indexMapTile) { return true; }  }
+        return false;
+    }
+
+
 
 
     // CONTROLLER CALL THESE -------------
@@ -71,35 +78,29 @@ public class L2PlayerServices {
         return player.ToDto();
     }
 
-    public async Task<int> CreateNewVillageAsync(Player player, int locX, int locY)
+    public async Task<int> CreateNewVillageAsync(Player player, int indexNewVillage)
     {
-        // trouver l'index 1D correspondant aux cooerdonnés
-        int indexMapTile = _mapServices.GetIndexMapTile(locX, locY); if(indexMapTile == int.MaxValue) { return int.MaxValue; }
-        // récuperation de la TileMap + lock si dispo
-        MapTile? mapTile = await _mapServices.GetIdentityOneTileWithLock(indexMapTile); if(mapTile != null) {
-            if(mapTile.type == TileType.Empty) {
-                try {
-                    // insert du nouveau village dans la collection Village
-                    Village newVillage = new Village();
-                    await _villages.InsertOneAsync(newVillage);
-                    try {
-                        // insert du nouveau village dans la MapTile
-                        var filter = Builders<MapTile>.Filter.Eq(t => t._id, mapTile._id);  var update = Builders<MapTile>.Update.Set(t => t.type, TileType.Village).Set(t => t.dataId, newVillage._id);
-                        await _mapTiles.UpdateOneAsync(filter, update);
-                        try {
-                            // ajout des coordonées du new village dans le player
-                            await _players.UpdateOneAsync( Builders<Player>.Filter.Eq(p => p.pseudo, player.pseudo), Builders<Player>.Update.Push(p => p.allMapVillages, indexMapTile) );
-                            // unlock + return index
-                            await _mapServices.OneTileReleaseLock(mapTile._id);
-                            return indexMapTile;
-                        } catch {  Console.WriteLine("Attention, Impossible d'insérer un nouveau Village dans le Player.");  var filter2 = Builders<MapTile>.Filter.Eq(t => t._id, mapTile._id);  var update2 = Builders<MapTile>.Update.Set(t => t.type, TileType.Empty); await _mapTiles.UpdateOneAsync(filter2, update2);  await _villages.DeleteOneAsync( Builders<Village>.Filter.Eq(t => t._id, newVillage._id));  }
-                    } catch { Console.WriteLine("Attention, Impossible d'insérer un nouveau Village sur une MapTile.");  await _villages.DeleteOneAsync( Builders<Village>.Filter.Eq(t => t._id, newVillage._id)); }
-                } catch { Console.WriteLine("Attention, Impossible d'insérer un nouveau Village."); }
-            }
-            await _mapServices.OneTileReleaseLock(mapTile._id);
+        int index = await _mapServices.CreateNewVillage(indexNewVillage); if(index != int.MaxValue) {
+            // ajout des coordonées du new village dans le player
+            try { 
+                await _players.UpdateOneAsync( Builders<Player>.Filter.Eq(p => p.pseudo, player.pseudo), Builders<Player>.Update.Push(p => p.allMapVillages, index) );
+                return index;
+            } catch { await _mapServices.DeleteVillage(index); }
         }
         return int.MaxValue;
-    } 
+    }
+
+
+    public async Task<bool> DeleteVillageAsync(Player player, int indexVillage)
+    {
+        if (PlayerOwnATile(player, indexVillage)) {
+            bool successDelete = await _mapServices.DeleteVillage(indexVillage); if(successDelete == true) {
+                var filter = Builders<Player>.Filter.Eq(p => p.pseudo, player.pseudo);  var update = Builders<Player>.Update.Pull(p => p.allMapVillages, indexVillage);
+                try { await _players.UpdateOneAsync(filter, update); return true; } catch {  Console.WriteLine("Erreur critique, impossible de supprimer un village d'un player"); }
+            }
+        }
+        return false;
+    }
 
     
 

@@ -9,7 +9,7 @@ namespace GameServer.Controllers;
 
 
 [ApiController]
-[Route("api/user/{username}/player/{playerName}/map/{posX}&{posY}/village")]
+[Route("api/user/{username}/player/{playerName}/map/{indexTile}/village")]
 public class L4VillageController : ControllerBase {
     
     private readonly L1UserServices _userServices; private readonly L2PlayerServices _playerServices; private readonly L3MapServices _mapServices; private readonly L4VillageServices _villageServices;
@@ -31,11 +31,10 @@ public class L4VillageController : ControllerBase {
 
 
     [HttpGet("getAllDatas")]
-    public async Task<IActionResult> AllDatas(string playerName, int? posX, int? posY) {
+    public async Task<IActionResult> AllDatas(string playerName, int? indexTile) {
         User? user = await _userServices.GetIdentityWithLock(User); if( user != null) {
             Player? player = await _playerServices.GetIdentityWithLock(user, playerName); if(player != null) {
-                int indexTile = _mapServices.GetIndexMapTile(posX ?? -1, posY ?? -1);
-                MapTile? mapTile =  await _mapServices.GetIdentityOneTileWithLock(indexTile); if (mapTile != null) {
+                MapTile? mapTile =  await _mapServices.GetIdentityOneTileWithLock(indexTile ?? -1); if (mapTile != null) {
                     if( mapTile.type == TileType.Village && _mapServices.OneTileIsOwnedByPlayer(player, mapTile)) {
                         VillageDto? village = await _villageServices.GetAllDatas(mapTile.dataId);
                         if(village != null) { 
@@ -53,26 +52,6 @@ public class L4VillageController : ControllerBase {
     }
 
 
-    [HttpPost("upgradeBuilding")]
-    public async Task<IActionResult> UpgradeBuilding(string playerName, int? posX, int? posY, [FromBody] BuildingType buildingType) {
-        User? user = await _userServices.GetIdentityWithLock(User); if( user != null) {
-            Player? player = await _playerServices.GetIdentityWithLock(user, playerName); if(player != null) {
-                int indexTile = _mapServices.GetIndexMapTile(posX ?? -1, posY ?? -1);
-                MapTile? mapTile =  await _mapServices.GetIdentityOneTileWithLock(indexTile); if (mapTile != null) {
-                    if( mapTile.type == TileType.Village && _mapServices.OneTileIsOwnedByPlayer(player, mapTile)) {
-                        if ( await _villageServices.UpgradeBuildingAsync(mapTile.dataId, buildingType) ) {
-                            await _mapServices.OneTileReleaseLock(indexTile);  await _playerServices.ReleaseLock(player);  await _userServices.ReleaseLock(user);
-                            return Ok($"Le batiment {buildingType} a été upgrade.");
-                        }
-                    }
-                    await _mapServices.OneTileReleaseLock(indexTile);
-                }
-                await _playerServices.ReleaseLock(player);
-            }
-            await _userServices.ReleaseLock(user);
-        }
-        return BadRequest($"Impossible d'upgrader le batiment {buildingType}.");
-    }
 }
 
 

@@ -56,7 +56,7 @@ public class L1UserServices {
                 var options = new FindOneAndUpdateOptions<User> { ReturnDocument = ReturnDocument.After };
 
                 try { User user = await _users.FindOneAndUpdateAsync(filter, update, options); if(user != null) { return user; } } catch { return null; }
-                Thread.Sleep(200); i++;
+                Thread.Sleep(100); i++;
             }
             return null;  // and add in logs
         } else { return null; }
@@ -68,7 +68,7 @@ public class L1UserServices {
             var update = Builders<User>.Update.Set("lockUntil", 0);
             await _users.UpdateOneAsync(Builders<User>.Filter.Eq("username", user.username), update);
             return true;
-        } catch { return false; }  // and log it
+        } catch { Console.WriteLine("Impossible de unlock un user."); return false; }
     }
 
 

@@ -40,11 +40,11 @@ public class L2PlayerController : ControllerBase
 
 
     [HttpPost("createNewVillage")]
-    public async Task<IActionResult> CreateNewVillage(string playerName, [FromBody] CreateNewVillageModel model)
+    public async Task<IActionResult> CreateNewVillage(string playerName, [FromBody] int? indexTile)
     {
         User? user = await _userServices.GetIdentityWithLock(User); if( user != null) {
             Player? player = await _playerServices.GetIdentityWithLock(user, playerName); if(player != null) {
-                int newVillage = await _playerServices.CreateNewVillageAsync(player, model.locationX ?? 0, model.locationY ?? 0); if(newVillage != int.MaxValue) {
+                int newVillage = await _playerServices.CreateNewVillageAsync(player, indexTile ?? -1); if(newVillage != int.MaxValue) {
                     await _playerServices.ReleaseLock(player);  await _userServices.ReleaseLock(user);
                     return Ok(newVillage);
                 }
@@ -53,6 +53,23 @@ public class L2PlayerController : ControllerBase
             await _userServices.ReleaseLock(user);
         }
         return BadRequest("Impossible de créer un nouveau village pour ce joueur.");
+    }
+
+
+    [HttpPost("deleteVillage")]
+    public async Task<IActionResult> DeleteVillage(string playerName, [FromBody] int? indexTile)
+    {
+        User? user = await _userServices.GetIdentityWithLock(User); if( user != null) {
+            Player? player = await _playerServices.GetIdentityWithLock(user, playerName); if(player != null) {
+                bool success = await _playerServices.DeleteVillageAsync(player, indexTile ?? -1); if(success != false) {
+                    await _playerServices.ReleaseLock(player);  await _userServices.ReleaseLock(user);
+                    return Ok("Village supprimé!");
+                }
+                await _playerServices.ReleaseLock(player);
+            }
+            await _userServices.ReleaseLock(user);
+        }
+        return BadRequest("Impossible de supprimer le village pour ce joueur.");
     }
 
 }
@@ -64,7 +81,3 @@ public class L2PlayerController : ControllerBase
 
 
 // MODELS USED FOR CLIENT REQUEST -------------------------------------------
-
-public class CreateNewVillageModel {
-    public int? locationX { get; set; } public int? locationY { get; set; }
-}
