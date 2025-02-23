@@ -59,7 +59,8 @@ public class L4VillageServices {
 
 
     public async Task<VillageDto?> ToDto(Village village) {
-        VillageDto newVillageDto = new VillageDto(new List<BuildingDto>());
+        VillageDto newVillageDto = new VillageDto(new List<BuildingDto>(), new UpgradeAction());
+        newVillageDto.upgradeAction1 = village.upgradeAction1;
         List<Building>? buildings = await _buildingServices.GetIdentityAllBuildings(village); if( buildings != null) {
             foreach (Building b in buildings) {
                 newVillageDto.buildings.Add(_buildingServices.ToDto(b));
@@ -119,7 +120,7 @@ public class L4VillageServices {
 
 
 
-    public async Task<VillageDto?> GetAllDatas(ObjectId? villageId)
+    public async Task<VillageDto?> GetVillageDatas(ObjectId? villageId)
     {
         Village? village = await GetIdentityWithLock(villageId); if( village != null) {
             VillageDto? newVillageDto = await ToDto(village); if(newVillageDto != null ) {
@@ -132,12 +133,54 @@ public class L4VillageServices {
 
 
 
-    public async Task<bool> UpgradeBuildingAsync(ObjectId? villageId, BuildingType buildingType)
+    public async Task<bool> StartUpgradeBuildingAsync(ObjectId? villageId, BuildingType buildingType)
     {
         Village? village = await GetIdentityWithLock(villageId); if( village != null) {
             // upgrade building
-            bool success = await _buildingServices.UpgradeBuildingAsync(village, buildingType);
-            if(success == true) { await ReleaseLock(village); return true; }
+            (bool success, Building building, Entrepot entrepot, DateTime endAt) = await _buildingServices.StartUpgradeBuildingAsync(village, buildingType);
+            if(success == true) {
+                bool successNewAction = village.upgradeAction1.newActionBegin(buildingType, endAt); if(successNewAction) {
+                    // update DBB
+                    try {
+                        var result = await _buildings.ReplaceOneAsync(e => e._id == entrepot._id, entrepot); if(result.MatchedCount > 0) { 
+                            var result2 = await _buildings.ReplaceOneAsync(b => b._id == building._id, building); if(result2.MatchedCount > 0) {
+                                var result3 = await _villages.ReplaceOneAsync(v => v._id == village._id, village); if(result3.MatchedCount > 0) {
+                                    await ReleaseLock(village); return true;
+                                }
+                            }
+                        }
+                        Console.WriteLine("Erreur critique dans l'update de la BDD dans StartupgradeBuilding");
+                    } catch { Console.WriteLine("Erreur critique dans l'update de la BDD dans StartupgradeBuilding 2"); }
+                } 
+            }
+            await ReleaseLock(village);
+        }
+        return false;
+    }
+
+
+    public async Task<bool> EndUpgradeAction1Async(ObjectId? villageId)
+    {
+        Village? village = await GetIdentityWithLock(villageId); if( village != null) {
+            if(!village.upgradeAction1.isDisponible())
+            {
+                BuildingType buildingToUpgrade = village.upgradeAction1.buildingType;
+                DateTime upgradeEndAt = village.upgradeAction1.endUpgradeAt;
+
+                (bool success1, Building building) = await _buildingServices.EndUpgradeBuildingAsync(village, buildingToUpgrade, upgradeEndAt); if(success1 == true) {
+                    if (village.upgradeAction1.endAction() ) {
+                        // update BDD
+                        try {
+                            var result = await _buildings.ReplaceOneAsync(b => b._id == building._id, building); if(result.MatchedCount > 0) {
+                                var result2 = await _villages.ReplaceOneAsync(v => v._id == village._id, village); if(result2.MatchedCount > 0) {
+                                    await ReleaseLock(village); return true;
+                                }
+                            }
+                            Console.WriteLine("Erreur critique dans l'update de la BDD dans EndupgradeBuilding");
+                        } catch { Console.WriteLine("Erreur critique dans l'update de la BDD dans EndupgradeBuilding 2"); }
+                    }
+                }
+            }
             await ReleaseLock(village);
         }
         return false;

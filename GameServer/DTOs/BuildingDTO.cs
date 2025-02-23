@@ -2,7 +2,7 @@
 namespace GameServer.DTOs;
 
 
-public class BuildingDto { public string? buildingType; public int level = 0; }
+public class BuildingDto { public string? buildingType; public int level = 0; public bool isInConstruction = false; }
 
 
 public class HqDTO : BuildingDto { }

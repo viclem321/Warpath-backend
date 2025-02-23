@@ -16,11 +16,12 @@ namespace GameServer.Models;
 public abstract class Building {
     public ObjectId _id { get; set; }
     public int level;
+    public bool isInConstruction;
 
-    public Building() { level = 0; }
+    public Building() { level = 0; isInConstruction = false; }
 
 
-    public (bool, JObject, JObject) GetUpgradeCatalogueDatas() {
+    public (bool, JObject, JObject) GetIdentityForUpgrade() {
         JObject? buildingCata; JObject? requiredUpgrade = null;
         buildingCata = CatalogueGlobal.buildings[this.GetType().Name];
         if(this.level + 1 <= (int)(buildingCata["MaxLevel"] ?? -1) ) { requiredUpgrade = (JObject?)buildingCata?["Levels"]?[this.level + 1]?["Required"]; }
@@ -28,12 +29,32 @@ public abstract class Building {
         if(buildingCata != null && requiredUpgrade != null) { return (true, buildingCata, requiredUpgrade); }
         else { return (false, new JObject(), new JObject()); }
     }
-    public bool Upgrade() {
+    
+    public (bool, DateTime) StartUpgrade() {
         try {
             JObject building = CatalogueGlobal.buildings[this.GetType().Name];
-            if( level + 1 <= ((int?)building["MaxLevel"] ?? 0) ) { level += 1; return true; }
-            else { return false;}
-        } catch { Console.WriteLine("Erreur critique dans Building Upgrade."); return false;}
+
+            if( isInConstruction == false && level + 1 <= ((int?)building?["MaxLevel"] ?? 0) ) {
+                int timeToBuildInSecondes = (int)(building?["Levels"]?[level + 1]?["TimeToBuild"] ?? int.MaxValue); if(timeToBuildInSecondes != int.MaxValue) {
+                    DateTime endAt = DateTime.UtcNow; endAt = endAt.AddSeconds(timeToBuildInSecondes);
+                    isInConstruction = true;
+                    return (true, endAt);
+                }
+            }
+        } catch { Console.WriteLine("Erreur critique dans Building StartUpgrade."); }
+        return (false, new DateTime());
+    }
+    public bool EndUpgrade(DateTime endAt) {
+        try {
+            JObject building = CatalogueGlobal.buildings[this.GetType().Name];
+            DateTime now = DateTime.UtcNow;
+
+            if( isInConstruction == true && level + 1 <= ((int?)building?["MaxLevel"] ?? 0) && now >= endAt ) {
+                level += 1; isInConstruction = false;
+                return true;
+            }
+        } catch { Console.WriteLine("Erreur critique dans Building EndUpgrade."); }
+        return false;
     }
     public abstract BuildingDto ToDto();
 }
@@ -46,7 +67,7 @@ public class Hq : Building {
     public Hq() { }
     public override BuildingDto ToDto()
     {
-        return new HqDTO { buildingType = this.GetType().Name,  level = this.level, };
+        return new HqDTO { buildingType = this.GetType().Name,  level = this.level, isInConstruction = this.isInConstruction };
     }
 }
 
@@ -62,7 +83,7 @@ public abstract class ResourceBuilding : Building {
 
     public override BuildingDto ToDto()
     {
-        return new ResourceBuildingDto { buildingType = this.GetType().Name, level = this.level,  quantity = this.quantity, lastHarvest = this.lastHarvest };
+        return new ResourceBuildingDto { buildingType = this.GetType().Name, level = this.level, isInConstruction = this.isInConstruction,  quantity = this.quantity, lastHarvest = this.lastHarvest };
     }
     public static ResourceType? FindResourceTypeWithBuildingType(BuildingType buildingType) {
         if(buildingType == BuildingType.Scierie) { return ResourceType.Wood;}
@@ -76,21 +97,21 @@ public abstract class ResourceBuilding : Building {
 public class Scierie : ResourceBuilding {
     public override BuildingDto ToDto()
     {
-        return new ScierieDTO { buildingType = this.GetType().Name, level = this.level,  quantity = this.quantity, lastHarvest = this.lastHarvest };
+        return new ScierieDTO { buildingType = this.GetType().Name, level = this.level, isInConstruction = this.isInConstruction,  quantity = this.quantity, lastHarvest = this.lastHarvest };
     }
 }
 [BsonDiscriminator("Ferme")]
 public class Ferme : ResourceBuilding {
     public override BuildingDto ToDto()
     {
-        return new FermeDTO { buildingType = this.GetType().Name, level = this.level,  quantity = this.quantity, lastHarvest = this.lastHarvest };
+        return new FermeDTO { buildingType = this.GetType().Name, level = this.level, isInConstruction = this.isInConstruction,  quantity = this.quantity, lastHarvest = this.lastHarvest };
     }
 }
 [BsonDiscriminator("Mine")]
 public class Mine : ResourceBuilding {
     public override BuildingDto ToDto()
     {
-        return new MineDTO { buildingType = this.GetType().Name, level = this.level,  quantity = this.quantity, lastHarvest = this.lastHarvest };
+        return new MineDTO { buildingType = this.GetType().Name, level = this.level, isInConstruction = this.isInConstruction,  quantity = this.quantity, lastHarvest = this.lastHarvest };
     }
 }
 
@@ -120,7 +141,7 @@ public class Entrepot : Building {
 
     public override BuildingDto ToDto()
     {
-        return new EntrepotDTO { buildingType = this.GetType().Name, level = this.level, stock = this.stock };
+        return new EntrepotDTO { buildingType = this.GetType().Name, level = this.level, isInConstruction = this.isInConstruction, stock = this.stock };
     }
 }
 
@@ -146,7 +167,7 @@ public class CampMilitaire : Building {
 
     public override BuildingDto ToDto()
     {
-        return new CampMilitaireDTO { buildingType = this.GetType().Name,  level = this.level, nSoldats = this.nSoldats, nSoldatsDisponible = this.nSoldatsDisponible };
+        return new CampMilitaireDTO { buildingType = this.GetType().Name,  level = this.level, isInConstruction = this.isInConstruction, nSoldats = this.nSoldats, nSoldatsDisponible = this.nSoldatsDisponible };
     }
 
 }
@@ -162,9 +183,15 @@ public class Caserne : Building {
 
     public bool TrainingTroops(int nTroopsToTrain) {
         if(level > 0 && nTroopsToTrain > 0 && isTraining == false) {
+            int caserneSpeedTrainingBonusPurcent = (int?)CatalogueGlobal.buildings?["Caserne"]?["Levels"]?[level]?["SpeedTrainingBonusPurcent"] ?? 0;
             JObject soldatCatalogue = CatalogueGlobal.troops["Soldat"];
+            // time to train without bonus
             int timeToTrain = nTroopsToTrain * (int)(soldatCatalogue["TimeForTraining"] ?? 0);
-            nSoldatsTraining = nTroopsToTrain; endTrainingAt = DateTime.UtcNow.AddMinutes(timeToTrain); isTraining = true;
+            // time to train with bonus  
+            double bonusCaserneFacteur = 1 - caserneSpeedTrainingBonusPurcent / 100.0;
+            int timeToTrainWithBonus = (int)(timeToTrain * bonusCaserneFacteur);
+            // update Caserne
+            nSoldatsTraining = nTroopsToTrain; endTrainingAt = DateTime.UtcNow.AddSeconds(timeToTrainWithBonus); isTraining = true;
             return true;
         }
         return false;
@@ -180,7 +207,7 @@ public class Caserne : Building {
     }
     public override BuildingDto ToDto()
     {
-        return new CaserneDTO { buildingType = this.GetType().Name,  level = this.level, isTraining = this.isTraining, nSoldatsTraining = this.nSoldatsTraining, endTrainingAt = this.endTrainingAt };
+        return new CaserneDTO { buildingType = this.GetType().Name,  level = this.level, isInConstruction = this.isInConstruction, isTraining = this.isTraining, nSoldatsTraining = this.nSoldatsTraining, endTrainingAt = this.endTrainingAt };
     }
 }
 

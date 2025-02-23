@@ -7,37 +7,43 @@
                         "Level": 0,
                         "Required": {},
                         "Cost": { "wood": 0, "food": 0, "oil": 0 },
+                        "TimeToBuild": 0,
                         "Production": 0, "Capacity": 0
                     },
                     {
                         "Level": 1,
                         "Required": {"Hq": 1},
                         "Cost": { "wood": 0, "food": 0, "oil": 0 },
-                        "Production": 300, "Capacity": 1000
+                        "TimeToBuild": 5,
+                        "Production": 10, "Capacity": 1000
                     },
                     {
                         "Level": 2,
                         "Required": {"Hq": 2},
                         "Cost": { "wood": 30, "food": 30, "oil": 30 },
-                        "Production": 330, "Capacity": 1300
+                        "TimeToBuild": 10,
+                        "Production": 30, "Capacity": 2000
                     },
                     {
                         "Level": 3,
                         "Required": {"Hq": 3},
                         "Cost": { "wood": 100, "food": 100, "oil": 100 },
-                        "Production": 100, "Capacity": 1000
+                        "TimeToBuild": 30,
+                        "Production": 100, "Capacity": 4000
                     },
                     {
                         "Level": 4,
                         "Required": {"Hq": 4},
                         "Cost": { "wood": 500, "food": 500, "oil": 500 },
-                        "Production": 400, "Capacity": 3000
+                        "TimeToBuild": 60,
+                        "Production": 200, "Capacity": 8000
                     },
                     {
                         "Level": 5,
                         "Required": {"Hq": 5},
                         "Cost": { "wood": 2000, "food": 2000, "oil": 2000 },
-                        "Production": 1200, "Capacity": 10000
+                        "TimeToBuild": 180,
+                        "Production": 500, "Capacity": 20000
                     }
                 ],
                 "MaxLevel": 5
@@ -49,37 +55,43 @@
                         "Level": 0,
                         "Required": {},
                         "Cost": { "wood": 0, "food": 0, "oil": 0 },
+                        "TimeToBuild": 0,
                         "Production": 0, "Capacity": 0
                     },
                     {
                         "Level": 1,
                         "Required": {"Hq": 1},
                         "Cost": { "wood": 0, "food": 0, "oil": 0 },
-                        "Production": 300, "Capacity": 1000
+                        "TimeToBuild": 5,
+                        "Production": 10, "Capacity": 1000
                     },
                     {
                         "Level": 2,
                         "Required": {"Hq": 2},
                         "Cost": { "wood": 30, "food": 30, "oil": 30 },
-                        "Production": 330, "Capacity": 1300
+                        "TimeToBuild": 10,
+                        "Production": 30, "Capacity": 2000
                     },
                     {
                         "Level": 3,
                         "Required": {"Hq": 3},
                         "Cost": { "wood": 100, "food": 100, "oil": 100 },
-                        "Production": 100, "Capacity": 1000
+                        "TimeToBuild": 30,
+                        "Production": 100, "Capacity": 3000
                     },
                     {
                         "Level": 4,
                         "Required": {"Hq": 4},
                         "Cost": { "wood": 500, "food": 500, "oil": 500 },
-                        "Production": 400, "Capacity": 3000
+                        "TimeToBuild": 60,
+                        "Production": 200, "Capacity": 6000
                     },
                     {
                         "Level": 5,
                         "Required": {"Hq": 5},
                         "Cost": { "wood": 2000, "food": 2000, "oil": 2000 },
-                        "Production": 1200, "Capacity": 10000
+                        "TimeToBuild": 180,
+                        "Production": 500, "Capacity": 20000
                     }
                 ],
                 "MaxLevel": 5
@@ -91,37 +103,43 @@
                         "Level": 0,
                         "Required": {},
                         "Cost": { "wood": 0, "food": 0, "oil": 0 },
+                        "TimeToBuild": 0,
                         "Production": 0, "Capacity": 0
                     },
                     {
                         "Level": 1,
                         "Required": {"Hq": 1},
                         "Cost": { "wood": 0, "food": 0, "oil": 0 },
-                        "Production": 300, "Capacity": 1000
+                        "TimeToBuild": 5,
+                        "Production": 10, "Capacity": 1000
                     },
                     {
                         "Level": 2,
                         "Required": {"Hq": 2},
                         "Cost": { "wood": 30, "food": 30, "oil": 30 },
-                        "Production": 330, "Capacity": 1300
+                        "TimeToBuild": 10,
+                        "Production": 30, "Capacity": 2000
                     },
                     {
                         "Level": 3,
                         "Required": {"Hq": 3},
                         "Cost": { "wood": 100, "food": 100, "oil": 100 },
-                        "Production": 100, "Capacity": 1000
+                        "TimeToBuild": 30,
+                        "Production": 100, "Capacity": 3000
                     },
                     {
                         "Level": 4,
                         "Required": {"Hq": 4},
                         "Cost": { "wood": 500, "food": 500, "oil": 500 },
-                        "Production": 400, "Capacity": 3000
+                        "TimeToBuild": 60,
+                        "Production": 200, "Capacity": 6000
                     },
                     {
                         "Level": 5,
                         "Required": {"Hq": 5},
                         "Cost": { "wood": 2000, "food": 2000, "oil": 2000 },
-                        "Production": 1200, "Capacity": 10000
+                        "TimeToBuild": 180,
+                        "Production": 500, "Capacity": 20000
                     }
                 ],
                 "MaxLevel": 5
@@ -137,27 +155,32 @@
                     {
                         "Level": 1,
                         "Required": {},
-                        "Cost": { "wood": 0, "food": 0, "oil": 0 }
+                        "Cost": { "wood": 0, "food": 0, "oil": 0 },
+                        "TimeToBuild": 0
                     },
                     {
                         "Level": 2,
                         "Required": {},
-                        "Cost": { "wood": 30, "food": 30, "oil": 30 }
+                        "Cost": { "wood": 30, "food": 30, "oil": 30 },
+                        "TimeToBuild": 10
                     },
                     {
                         "Level": 3,
                         "Required": {},
-                        "Cost": { "wood": 100, "food": 100, "oil": 100 }
+                        "Cost": { "wood": 100, "food": 100, "oil": 100 },
+                        "TimeToBuild": 30
                     },
                     {
                         "Level": 4,
                         "Required": {},
-                        "Cost": { "wood": 500, "food": 500, "oil": 500 }
+                        "Cost": { "wood": 500, "food": 500, "oil": 500 },
+                        "TimeToBuild": 60
                     },
                     {
                         "Level": 5,
                         "Required": {},
-                        "Cost": { "wood": 2000, "food": 2000, "oil": 2000 }
+                        "Cost": { "wood": 2000, "food": 2000, "oil": 2000 },
+                        "TimeToBuild": 180
                     }
                 ],
                 "MaxLevel": 5
@@ -169,36 +192,42 @@
                         "Level": 0,
                         "Required": {},
                         "Cost": { "wood": 0, "food": 0, "oil": 0 },
-                        "Capacity": 1000
+                        "TimeToBuild": 0,
+                        "Capacity": 0
                     },
                     {
                         "Level": 1,
                         "Required": {"Hq": 1},
                         "Cost": { "wood": 10, "food": 10, "oil": 10 },
+                        "TimeToBuild": 5,
                         "Capacity": 3000
                     },
                     {
                         "Level": 2,
                         "Required": {"Hq": 2},
                         "Cost": { "wood": 30, "food": 30, "oil": 30 },
+                        "TimeToBuild": 10,
                         "Capacity": 10000
                     },
                     {
                         "Level": 3,
                         "Required": {"Hq": 3},
                         "Cost": { "wood": 100, "food": 100, "oil": 100 },
+                        "TimeToBuild": 30,
                         "Capacity": 30000
                     },
                     {
                         "Level": 4,
                         "Required": {"Hq": 4},
                         "Cost": { "wood": 500, "food": 500, "oil": 500 },
+                        "TimeToBuild": 60,
                         "Capacity": 100000
                     },
                     {
                         "Level": 5,
                         "Required": {"Hq": 5},
                         "Cost": { "wood": 2000, "food": 2000, "oil": 2000 },
+                        "TimeToBuild": 180,
                         "Capacity": 300000
                     }
                 ],
@@ -210,12 +239,14 @@
                     {
                         "Level": 0,
                         "Required": {},
-                        "Cost": { "wood": 0, "food": 0, "oil": 0 }
+                        "Cost": { "wood": 0, "food": 0, "oil": 0 },
+                        "TimeToBuild": 0
                     },
                     {
                         "Level": 1,
                         "Required": {"Hq": 1},
-                        "Cost": { "wood": 0, "food": 0, "oil": 0 }
+                        "Cost": { "wood": 0, "food": 0, "oil": 0 },
+                        "TimeToBuild": 10
                     }
                 ],
                 "MaxLevel": 1
@@ -227,37 +258,43 @@
                         "Level": 0,
                         "Required": {},
                         "Cost": { "wood": 0, "food": 0, "oil": 0 },
+                        "TimeToBuild": 0,
                         "SpeedTrainingBonusPurcent": 0
                     },
                     {
                         "Level": 1,
                         "Required": {"Hq": 1, "CampMilitaire": 1},
                         "Cost": { "wood": 10, "food": 10, "oil": 10 },
-                        "SpeedTrainingBonusPurcent": 10
+                        "TimeToBuild": 5,
+                        "SpeedTrainingBonusPurcent": 1
                     },
                     {
                         "Level": 2,
                         "Required": {"Hq": 2},
                         "Cost": { "wood": 30, "food": 30, "oil": 30 },
-                        "SpeedTrainingBonusPurcent": 20
+                        "TimeToBuild": 10,
+                        "SpeedTrainingBonusPurcent": 5
                     },
                     {
                         "Level": 3,
                         "Required": {"Hq": 3},
                         "Cost": { "wood": 100, "food": 100, "oil": 100 },
-                        "SpeedTrainingBonusPurcent": 50
+                        "TimeToBuild": 30,
+                        "SpeedTrainingBonusPurcent": 10
                     },
                     {
                         "Level": 4,
                         "Required": {"Hq": 4},
                         "Cost": { "wood": 500, "food": 500, "oil": 500 },
-                        "SpeedTrainingBonusPurcent": 100
+                        "TimeToBuild": 60,
+                        "SpeedTrainingBonusPurcent": 20
                     },
                     {
                         "Level": 5,
                         "Required": {"Hq": 5},
                         "Cost": { "wood": 2000, "food": 2000, "oil": 2000 },
-                        "SpeedTrainingBonusPurcent": 200
+                        "TimeToBuild": 180,
+                        "SpeedTrainingBonusPurcent": 30
                     }
                 ],
                 "MaxLevel": 5
@@ -266,10 +303,12 @@
 
 
 
+
+        
         "Troops" : {
             "Soldat": {
                 "Cost": { "wood": 10, "food": 10, "oil": 10 },
-                "TimeForTraining": 1,
+                "TimeForTraining": 60,
                 "Damages": 1
             }
         }

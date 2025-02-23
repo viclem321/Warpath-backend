@@ -87,11 +87,11 @@ public class L5BuildingServices {
 
 
 
-    public async Task<bool> UpgradeBuildingAsync(Village village, BuildingType buildingType)
+    public async Task<(bool, Building, Entrepot, DateTime)> StartUpgradeBuildingAsync(Village village, BuildingType buildingType)
     {
         Building? building = await GetIdentityOneBuilding(village, buildingType); if( building != null) {
             // get all datas about this building and verify if all is ok in Catalogue
-            (bool getCatalogue, JObject buildingCata, JObject required) = building.GetUpgradeCatalogueDatas(); if (getCatalogue == true) {
+            (bool getCatalogue, JObject buildingCata, JObject required) = building.GetIdentityForUpgrade(); if (getCatalogue == true) {
                 // recup all buildings which are required and verify if they have the good requirements
                 bool allRequirementsAreOk = true;
                 foreach (var property in required.Properties()) {
@@ -109,12 +109,9 @@ public class L5BuildingServices {
                         JObject? cost = (JObject?)buildingCata["Levels"]?[building.level + 1]?["Cost"]; if (cost != null) {
                             int woodCost = (int)(cost["wood"] ?? int.MaxValue); int foodCost = (int)(cost["food"] ?? int.MaxValue); int oilCost = (int)(cost["oil"] ?? int.MaxValue);
                             if(entrepot.ConsommeRessource(woodCost, foodCost, oilCost)) {
-                                var filter = Builders<Building>.Filter.Eq(e => e._id, entrepot._id);
-                                var result = await _buildings.ReplaceOneAsync(filter, entrepot); if(result.MatchedCount > 0) {
-                                    // upgrade le building
-                                    if(building.Upgrade()) {
-                                        try { await _buildings.ReplaceOneAsync(b => b._id == building._id, building); return true; } catch { Console.WriteLine("Impossible d'upgrader le batiment en BDD"); }
-                                    }
+                                // upgrade building
+                                (bool successUpgrade, DateTime endAt) = building.StartUpgrade();  if(successUpgrade) {
+                                    return (true, building, entrepot, endAt);
                                 }
                             }
                         }
@@ -122,8 +119,21 @@ public class L5BuildingServices {
                 }
             }
         }
-        return false;
+        return (false, new Hq(), new Entrepot(), new DateTime());
     }
+
+
+    public async Task<(bool, Building)> EndUpgradeBuildingAsync(Village village, BuildingType buildingType, DateTime endAt)
+    {
+        Building? building = await GetIdentityOneBuilding(village, buildingType); if( building != null) {
+            // upgrade building
+            bool successUpgrade = building.EndUpgrade(endAt);  if(successUpgrade) { return (true, building); }
+        }
+        return (false, new Hq());
+    }
+
+
+
 
 
     public async Task<int> RecoltAsync(Village village, BuildingType buildingType)
@@ -139,20 +149,25 @@ public class L5BuildingServices {
                 DateTime now = DateTime.UtcNow;
                 double minutesEcoulees = (now - lastHarvest).TotalMinutes;
                 int ressourcesWon = production * (int)minutesEcoulees; if( ressourcesWon > capacity) { ressourcesWon = capacity; }
-                //remettre le lastHarvest à Now
-                var filter = Builders<Building>.Filter.Eq(b => b._id, resourceBuilding._id);  
-                var update = Builders<Building>.Update.Set(b => ((ResourceBuilding)b).lastHarvest, now);
-                try { 
-                    await _buildings.UpdateOneAsync(filter, update);
-                    // remplir l'entrepot
-                    Entrepot? entrepot = (Entrepot?)await GetIdentityOneBuilding(village, BuildingType.Entrepot); if(entrepot != null) {
-                        ResourceType? resourceType = ResourceBuilding.FindResourceTypeWithBuildingType(buildingType); 
-                        if(entrepot.FeedStock(resourceType, ressourcesWon)) {
+                // remplir l'entrepot
+                Entrepot? entrepot = (Entrepot?)await GetIdentityOneBuilding(village, BuildingType.Entrepot); if(entrepot != null) {
+                    ResourceType? resourceType = ResourceBuilding.FindResourceTypeWithBuildingType(buildingType); 
+                    if(entrepot.FeedStock(resourceType, ressourcesWon)) {
+                        // update DBB
+                        try { 
+                            // remettre le lastHarvest à Now
+                            var filter = Builders<Building>.Filter.Eq(b => b._id, resourceBuilding._id);  
+                            var update = Builders<Building>.Update.Set(b => ((ResourceBuilding)b).lastHarvest, now);
+                            await _buildings.UpdateOneAsync(filter, update);
+                            // update entreprot in DBB
                             var filter2 = Builders<Building>.Filter.Eq(e => e._id, entrepot._id);
-                            var result2 = await _buildings.ReplaceOneAsync(filter2, entrepot); if(result2.MatchedCount > 0) { return entrepot.stock[(int)(resourceType ?? 0)]; }
-                        }
+                            var result2 = await _buildings.ReplaceOneAsync(filter2, entrepot); if(result2.MatchedCount > 0) { 
+                                return entrepot.stock[(int)(resourceType ?? 0)]; 
+                            } 
+                            Console.WriteLine("Erreur critique update DBB dans RecoltAsync");
+                        } catch { Console.WriteLine("Erreur critique update DBB dans RecoltAsync 2"); }
                     }
-                } catch { ; }
+                }
             }
         }
         return int.MaxValue;
@@ -171,15 +186,17 @@ public class L5BuildingServices {
                 // update caserne
                 Caserne? caserne = (Caserne?)await GetIdentityOneBuilding(village, BuildingType.Caserne); if(caserne != null) {
                     if (caserne.TrainingTroops(nSoldats)) {
+                        // update DBB
                         try {
                             var filter = Builders<Building>.Filter.Eq(e => e._id, entrepot._id);
                             var result = await _buildings.ReplaceOneAsync(filter, entrepot); if(result.MatchedCount > 0) {
                                 var filter2 = Builders<Building>.Filter.Eq(e => e._id, caserne._id);
                                 var result2 = await _buildings.ReplaceOneAsync(filter2, caserne); if(result2.MatchedCount > 0) {
                                     return true;
-                                } else { Console.WriteLine("Erreur critique dans TrainingAsync update caserne"); }
+                                }
                             }
-                        } catch { ; }
+                            Console.WriteLine("Erreur critique dans TrainingAsync update DBB");
+                        } catch { Console.WriteLine("Erreur critique dans TrainingAsync update DBB 2"); }
                     }
                 }
             }
@@ -195,6 +212,7 @@ public class L5BuildingServices {
                 // update CampMilitaire
                 CampMilitaire? campMilitaire = (CampMilitaire?)await GetIdentityOneBuilding(village, BuildingType.CampMilitaire); if(campMilitaire != null) {
                     if(campMilitaire.AddTroops(nSoldatsTrained)) {
+                        // update DBB
                         try {
                             var filter = Builders<Building>.Filter.Eq(e => e._id, caserne._id);
                             var result = await _buildings.ReplaceOneAsync(filter, caserne); if(result.MatchedCount > 0) {
@@ -203,7 +221,8 @@ public class L5BuildingServices {
                                     return true;
                                 }
                             }
-                        } catch { ; }
+                            Console.WriteLine("Erreur critique dans EndTrainingAsync update DBB");
+                        } catch { Console.WriteLine("Erreur critique dans EndTrainingAsync update DBB 2"); }
                     }
                 }
             }

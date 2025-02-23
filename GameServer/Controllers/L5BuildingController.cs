@@ -54,15 +54,15 @@ public class L5BuildingController : ControllerBase {
     }
 
 
-    [HttpPost("{buildingType}/upgradeBuilding")]
-    public async Task<IActionResult> UpgradeBuilding(string playerName, int? indexTile, BuildingType? buildingType) {
+    [HttpPost("{buildingType}/startUpgradeBuilding")]
+    public async Task<IActionResult> StartUpgradeBuilding(string playerName, int? indexTile, BuildingType? buildingType) {
         User? user = await _userServices.GetIdentityWithLock(User); if( user != null) {
             Player? player = await _playerServices.GetIdentityWithLock(user, playerName); if(player != null) {
                 MapTile? mapTile =  await _mapServices.GetIdentityOneTileWithLock(indexTile ?? -1); if (mapTile != null) {
                     if( mapTile.type == TileType.Village && _mapServices.OneTileIsOwnedByPlayer(player, mapTile) ) {
-                        if ( await _villageServices.UpgradeBuildingAsync(mapTile.dataId, buildingType ?? BuildingType.Hq) ) {
+                        if ( await _villageServices.StartUpgradeBuildingAsync(mapTile.dataId, buildingType ?? BuildingType.Hq) ) {
                             await _mapServices.OneTileReleaseLock(indexTile ?? -1);  await _playerServices.ReleaseLock(player);  await _userServices.ReleaseLock(user);
-                            return Ok($"Le batiment {buildingType} a été upgrade.");
+                            return Ok($"Le batiment {buildingType} est maintenant en travaux.");
                         }
                     }
                     await _mapServices.OneTileReleaseLock(indexTile ?? 0);

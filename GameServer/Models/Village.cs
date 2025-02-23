@@ -13,16 +13,39 @@ public class Village {
     public ObjectId _id;  // dont initialize or manage this one
     public int lockUntil;
     public List<ObjectId> buildings;
+    public UpgradeAction upgradeAction1;
 
 
     public Village(){
         lockUntil = 0;
         buildings = new List<ObjectId>();
-        // buildings = new List<Building> { new Hq(), new Scierie(), new Ferme(), new Mine(), new Entrepot() };
+        upgradeAction1 = new UpgradeAction();
+    }
+}
+
+
+
+
+public class UpgradeAction {
+    public bool active = false;
+    public BuildingType buildingType;
+    public DateTime endUpgradeAt;
+
+    public bool isDisponible() {
+        return !active;
     }
 
-    public VillageDto ToDto(List<BuildingDto> buildingDtos) {
-        return new VillageDto(buildingDtos);
+    public bool newActionBegin(BuildingType pBuildingType, DateTime endAt) {
+        if(isDisponible()) {
+            buildingType = pBuildingType; endUpgradeAt = endAt; active = true;
+            return true;
+        }
+        return false;
+    }
+
+    public bool endAction() {
+        if(!isDisponible()) { active = false; return true; }
+        return false;
     }
 }
 
