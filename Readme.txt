@@ -1,11 +1,16 @@
+POUR TESTER LE SERVEUR:
+	-importer le projet Warpath-Shared (le mettre à l'extérieur de ce projet ../)
+	-exécuter GameServer/publishWindows/GameServer.exe
 
-SI COPIE DU PROJET SUR UN AUTRE ORDINTEUR WINDOWS : 
+
+SI COPIE DU PROJET SUR UN ORDINTEUR WINDOWS POUR TRAVAILLER DESSUS : 
 
     -installer .NET version 9
     -installer mongodb pour Windows, créer une database nommée "GameServerDB" qui tourne en localhost sur le port 27017
     -installer Visual studio code (avec l'extension Web C# Devkit)
     
-    -copier le projet (sans les dossiers bin et obj). Vous pouvez ouvrir le dossier avec Visual studio code.
+    -copier le projet (sans les dossiers bin et obj).    
+    -importer le projet Warpath-Shared (le mettre à l'extérieur de ce projet ../)
     -exécuter "dotnet restore" dans le dossier du projet pour installer toutes les dépendances requises.
     -si besoin, vérifier la chaine de connexion à la base de donnée dans appsettings.json/appsettings.Development.json
     -lancer le programme avec dotnet run
@@ -46,4 +51,3 @@ LES ENDPOINTS:
 
 NOTES PERSO : 
 
--Pour le moment, garder la Map en BDD dans un seul document, et possiblement à l'avenir séparer la Map en chunks, ou/et garder une copie de la Map en mémoire vive pour les accès en lecture.
