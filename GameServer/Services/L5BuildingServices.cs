@@ -3,11 +3,10 @@ using Newtonsoft.Json.Linq;
 using MongoDB.Driver;
 using MongoDB.Bson;
 using System.Security.Claims;
+using Warpath.Shared.Catalogue;
+using Warpath.Shared.DTOs;
 using GameServer.Models;
 using GameServer.Datas;
-using GameServer.DTOs;
-using GameServer.Catalogue;
-using System.Linq.Expressions;
 
 namespace GameServer.Services;
 
@@ -63,6 +62,8 @@ public class L5BuildingServices {
 
 
     // CONTROLLER CALL THESE -------------
+
+
 
     // méthode special à enlever plus tard
     public async Task<List<BuildingDto>?> GetAllBuildingsAsync()
@@ -176,7 +177,7 @@ public class L5BuildingServices {
 
 
 
-    public async Task<bool> TrainingAsync(Village village, int nSoldats)
+    public async Task<(bool, DateTime)> TrainingAsync(Village village, int nSoldats)
     {
         // update entrepot
         Entrepot? entrepot = (Entrepot?)await GetIdentityOneBuilding(village, BuildingType.Entrepot); if(entrepot != null) {
@@ -192,7 +193,7 @@ public class L5BuildingServices {
                             var result = await _buildings.ReplaceOneAsync(filter, entrepot); if(result.MatchedCount > 0) {
                                 var filter2 = Builders<Building>.Filter.Eq(e => e._id, caserne._id);
                                 var result2 = await _buildings.ReplaceOneAsync(filter2, caserne); if(result2.MatchedCount > 0) {
-                                    return true;
+                                    return (true, caserne.endTrainingAt);
                                 }
                             }
                             Console.WriteLine("Erreur critique dans TrainingAsync update DBB");
@@ -201,7 +202,7 @@ public class L5BuildingServices {
                 }
             }
         }
-        return false;
+        return (false, DateTime.UtcNow);
     }
 
     public async Task<bool> EndTrainingAsync(Village village)

@@ -1,4 +1,5 @@
-using GameServer.DTOs;
+using Warpath.Shared.Catalogue;
+using Warpath.Shared.DTOs;
 using GameServer.Models;
 using GameServer.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +24,10 @@ public class L3MapController : ControllerBase {
     // méthode special à enlever plus tard
     [HttpGet("getAllMap")]
     public async Task<IActionResult> GetAllMap() {
-        List<MapTile> map = await _mapServices.GetAllMapAsync(); return Ok(map);
+        MapDto? mapDto = await _mapServices.GetAllMapAsync(); if(mapDto != null) {
+            return Ok(mapDto);
+        }
+        else { return BadRequest("Impossible de d'envoyer la MapDto au client."); }
     }
 
 
@@ -33,7 +37,7 @@ public class L3MapController : ControllerBase {
             Player? player = await _playerServices.GetIdentityWithLock(user, playerName); if(player != null) {
                 MapTile? mapTile =  await _mapServices.GetOneTile(player, indexTile ?? -1); if (mapTile != null) {
                     await _playerServices.ReleaseLock(player);  await _userServices.ReleaseLock(user);
-                    return Ok(mapTile);
+                    return Ok(mapTile.ToDto(player.pseudo));
                 }
                 await _playerServices.ReleaseLock(player);
             }
@@ -51,11 +55,10 @@ public class L3MapController : ControllerBase {
             Player? player = await _playerServices.GetIdentityWithLock(user, playerName); if(player != null) {
                 MapTile? mapTile =  await _mapServices.GetIdentityOneTileWithLock(indexTile ?? -1); if (mapTile != null) {
                     if( mapTile.type == TileType.Village && _mapServices.OneTileIsOwnedByPlayer(player, mapTile)) {
-                        (bool successOperation, bool successAttack) = await _mapServices.Attack(mapTile, nSoldats ?? 0, indexTileToAttack ?? -1);
-                        if(successOperation) {
+                        (bool successOperation, RapportFightDto? rapport) = await _mapServices.Attack(mapTile, nSoldats ?? 0, indexTileToAttack ?? -1);
+                        if(successOperation && rapport != null) {
                             await _mapServices.OneTileReleaseLock(indexTile ?? -1);  await _playerServices.ReleaseLock(player);  await _userServices.ReleaseLock(user);
-                            if(successAttack) { return Ok($"Vous avez vaincu le village situé à la position {indexTileToAttack}."); }
-                            else { return Ok($"Vous avez été vaincu par le village situé à la position {indexTileToAttack}."); }
+                            return Ok(rapport);
                         }
                     }
                     await _mapServices.OneTileReleaseLock(indexTile ?? -1);
@@ -65,6 +68,14 @@ public class L3MapController : ControllerBase {
             await _userServices.ReleaseLock(user);
         }
         return BadRequest($"Impossible d'attaquer ce village.");
+    }
+
+    [HttpGet("getOneRapport/{idRapport}")]
+    public async Task<IActionResult> GetOneRapport(string? idRapport) {
+        RapportFightDto? rapportFightDto = await _mapServices.GetOneRapport(idRapport ?? ""); if(rapportFightDto != null) {
+            return Ok(rapportFightDto);
+        }
+        return BadRequest("Impossible d'obtenir ce rapport.");
     }
 
 

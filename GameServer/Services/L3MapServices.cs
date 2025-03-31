@@ -1,11 +1,11 @@
 using MongoDB.Driver;
 using MongoDB.Bson;
 using System.Security.Claims;
+using Warpath.Shared.Catalogue;
+using Warpath.Shared.DTOs;
 using GameServer.Models;
 using GameServer.Datas;
-using GameServer.DTOs;
-using System.Runtime.InteropServices;
-using System.Text.Json;
+using GameServer.Hubs;
 
 namespace GameServer.Services;
 
@@ -13,14 +13,14 @@ namespace GameServer.Services;
 
 
 public class L3MapServices {
-    private readonly L4VillageServices _villageServices;  private readonly L5BuildingServices _buildingServices;
+    private readonly L4VillageServices _villageServices;  private readonly L5BuildingServices _buildingServices; private readonly GameHub _gameHub;
 
-    private readonly IMongoCollection<MapTile> _mapTiles; private readonly int gridDimensionsX = 50; int gridDimensionsY = 50;   private readonly IMongoCollection<Building> _buildings;
+    private readonly IMongoCollection<MapTile> _mapTiles; private readonly int gridDimensionsX = CatalogueGlobal.gridDimension; int gridDimensionsY = CatalogueGlobal.gridDimension; private readonly IMongoCollection<Village> _villages;   private readonly IMongoCollection<Building> _buildings;  private readonly IMongoCollection<RapportFight> _rapportsFight;
 
-    public L3MapServices(MongoDBContext context, L4VillageServices villageServices, L5BuildingServices buildingServices)
+    public L3MapServices(MongoDBContext context, L4VillageServices villageServices, L5BuildingServices buildingServices, GameHub gameHub)
     {
-        _villageServices = villageServices; _buildingServices = buildingServices;
-        _mapTiles = context.GetCollection<MapTile>("MapTiles");  _buildings = context.GetCollection<Building>("Buildings");
+        _villageServices = villageServices; _buildingServices = buildingServices; _gameHub = gameHub;
+        _mapTiles = context.GetCollection<MapTile>("MapTiles"); _villages = context.GetCollection<Village>("Villages");  _buildings = context.GetCollection<Building>("Buildings"); _rapportsFight = context.GetCollection<RapportFight>("RapportsFight");
 
         bool isEmpty = _mapTiles.CountDocuments(Builders<MapTile>.Filter.Empty) == 0;
         if(isEmpty) {
@@ -105,11 +105,11 @@ public class L3MapServices {
 
 
 
-    public async Task<int> CreateNewVillage(int indexMapTile) {
+    public async Task<int> CreateNewVillage(int indexMapTile, string pPseudoPlayer) {
         // récuperation de la TileMap + lock si dispo
         MapTile? mapTile = await GetIdentityOneTileWithLock(indexMapTile); if(mapTile != null) {
             if(mapTile.type == TileType.Empty) {
-                Village? newVillage = await _villageServices.CreateNewVillage(); if(newVillage != null) {
+                Village? newVillage = await _villageServices.CreateNewVillage(pPseudoPlayer); if(newVillage != null) {
                     var filter = Builders<MapTile>.Filter.Eq(t => t._id, mapTile._id);  var update = Builders<MapTile>.Update.Set(t => t.type, TileType.Village).Set(t => t.dataId, newVillage._id);
                     try { 
                         await _mapTiles.UpdateOneAsync(filter, update); 
@@ -148,11 +148,21 @@ public class L3MapServices {
     // CONTROLLER CALL THESE -------------
 
     // Attention, requete extremement couteuse
-    public async Task<List<MapTile>> GetAllMapAsync() {
+    public async Task<MapDto?> GetAllMapAsync() {
         try {
-        List<MapTile> mapTiles = await _mapTiles.Find(Builders<MapTile>.Filter.Empty).ToListAsync();
-        return mapTiles;
-        } catch { Console.WriteLine("Probleme d'import des TilesMap."); return new List<MapTile>(); }
+            Map newMap = new Map(null);
+            List<MapTile> mapTiles = await _mapTiles.Find(Builders<MapTile>.Filter.Empty).ToListAsync();
+            List<string> villageNames = new List<string>(new string[mapTiles.Count]); int counter1 = 0;
+            foreach(MapTile mapTile in mapTiles) {
+                if(mapTile.type == TileType.Village) {
+                    Village village = await _villages.Find(Builders<Village>.Filter.Eq(v => v._id, mapTile.dataId)).FirstOrDefaultAsync();
+                    villageNames[counter1] = village.owner;
+                }
+                counter1 ++;
+            }
+            newMap.mapTiles = mapTiles;
+            return newMap.ToDto(villageNames);
+        } catch { Console.WriteLine("Probleme d'import de la Map."); return null; }
     }
 
 
@@ -166,8 +176,19 @@ public class L3MapServices {
     }
 
 
+    public async Task<RapportFightDto?> GetOneRapport(string pRapport) {
+        try {
+        RapportFight? rapport = await _rapportsFight.Find(Builders<RapportFight>.Filter.Eq(r => r._id, new ObjectId(pRapport))).FirstOrDefaultAsync();
+        if(rapport != null) {
+            return rapport.ToDto();
+        }
+        } catch {  return null; }
+        return null;
+    }
 
-    public async Task<(bool, bool)> Attack(MapTile mapTile, int nSoldatsToSend, int indexTileToAttack) {
+
+
+    public async Task<(bool, RapportFightDto?)> Attack(MapTile mapTile, int nSoldatsToSend, int indexTileToAttack) {
         Village? village = await _villageServices.GetIdentityWithLock(mapTile.dataId); if(village != null) {
             CampMilitaire? campMilitaire = (CampMilitaire?)await _buildingServices.GetIdentityOneBuilding(village, BuildingType.CampMilitaire); if(campMilitaire != null) {
                 int nSoldatsAttack = campMilitaire.sendTroopsToAction(nSoldatsToSend); if(nSoldatsAttack != int.MaxValue) {
@@ -182,7 +203,7 @@ public class L3MapServices {
                                         int nSoldatsAttackLost = nSoldatsAttack - nSoldatsAttackSurvived;
                                         int nSoldatsDefendSurvived = nSoldatsDefenser - nSoldatsAttack; if(nSoldatsDefendSurvived < 0) { nSoldatsDefendSurvived = 0; }
                                         int nSoldatsDefendLost = nSoldatsDefenser - nSoldatsDefendSurvived;
-                                        bool successAttack = false; if(nSoldatsAttackSurvived > 0) { successAttack = true; }
+                                        string attackWinner = ""; if(nSoldatsAttackSurvived > 0) { attackWinner = village.owner; } else { attackWinner = villageDefenser.owner; }
                                         // actualize defenser
                                         campMilitaireDefenser.nSoldats -= nSoldatsDefendLost;
                                         campMilitaireDefenser.nSoldatsDisponible = nSoldatsDefendSurvived;
@@ -195,9 +216,14 @@ public class L3MapServices {
                                             var result = await _buildings.ReplaceOneAsync(filter, campMilitaireDefenser); if(result.MatchedCount > 0) {
                                                 var filter2 = Builders<Building>.Filter.Eq(e => e._id, campMilitaire._id);
                                                 var result2 = await _buildings.ReplaceOneAsync(filter2, campMilitaire); if(result2.MatchedCount > 0) {
-                                                    await _villageServices.ReleaseLock(villageDefenser);  await OneTileReleaseLock(mapTileDefenser._id);  await _villageServices.ReleaseLock(village);
                                                     // If all is ok
-                                                    return (true, successAttack);
+                                                    RapportFight newRapport = new RapportFight(village.owner, villageDefenser.owner, DateTime.UtcNow, nSoldatsAttack, nSoldatsDefenser, nSoldatsAttackSurvived, nSoldatsDefendSurvived, attackWinner);
+                                                    try { await _rapportsFight.InsertOneAsync(newRapport); } catch { Console.WriteLine("Error in insert Rapport");}
+                                                    // send message to defender with id of the rapport
+                                                    await _gameHub.SendMessageToOne(villageDefenser.owner, "ReceiveAttackNotification", newRapport._id.ToString());
+                                                    await _villageServices.ReleaseLock(villageDefenser);  await OneTileReleaseLock(mapTileDefenser._id);  await _villageServices.ReleaseLock(village);
+                                                    
+                                                    return (true, newRapport.ToDto());
                                                 }
                                             }
                                         } catch { ; }
@@ -213,7 +239,7 @@ public class L3MapServices {
             }
             await _villageServices.ReleaseLock(village);
         }
-        return (false, false);
+        return (false, null);
     }
 
 

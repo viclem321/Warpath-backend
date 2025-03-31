@@ -3,10 +3,10 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Security.Claims;
+using Warpath.Shared.DTOs;
 using GameServer.Datas;
 using GameServer.Models;
 using MongoDB.Bson;
-using GameServer.DTOs;
 
 namespace GameServer.Services;
 

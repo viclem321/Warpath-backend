@@ -1,9 +1,10 @@
 using MongoDB.Driver;
 using MongoDB.Bson;
 using System.Security.Claims;
+using Warpath.Shared.Catalogue;
+using Warpath.Shared.DTOs;
 using GameServer.Models;
 using GameServer.Datas;
-using GameServer.DTOs;
 using ZstdSharp.Unsafe;
 
 namespace GameServer.Services;
@@ -12,7 +13,6 @@ namespace GameServer.Services;
 
 
 public class L2PlayerServices {
-
 
     private readonly L3MapServices _mapServices;
     private readonly IMongoCollection<Player> _players;  private readonly IMongoCollection<Village> _villages;  private readonly IMongoCollection<MapTile> _mapTiles;
@@ -80,7 +80,7 @@ public class L2PlayerServices {
 
     public async Task<int> CreateNewVillageAsync(Player player, int indexNewVillage)
     {
-        int index = await _mapServices.CreateNewVillage(indexNewVillage); if(index != int.MaxValue) {
+        int index = await _mapServices.CreateNewVillage(indexNewVillage, player.pseudo); if(index != int.MaxValue) {
             // ajout des coordonées du new village dans le player
             try { 
                 await _players.UpdateOneAsync( Builders<Player>.Filter.Eq(p => p.pseudo, player.pseudo), Builders<Player>.Update.Push(p => p.allMapVillages, index) );

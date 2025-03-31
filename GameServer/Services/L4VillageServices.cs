@@ -1,9 +1,10 @@
 using MongoDB.Driver;
 using MongoDB.Bson;
 using System.Security.Claims;
+using Warpath.Shared.Catalogue;
+using Warpath.Shared.DTOs;
 using GameServer.Models;
 using GameServer.Datas;
-using GameServer.DTOs;
 
 namespace GameServer.Services;
 
@@ -59,8 +60,8 @@ public class L4VillageServices {
 
 
     public async Task<VillageDto?> ToDto(Village village) {
-        VillageDto newVillageDto = new VillageDto(new List<BuildingDto>(), new UpgradeAction());
-        newVillageDto.upgradeAction1 = village.upgradeAction1;
+        VillageDto newVillageDto = new VillageDto(new List<BuildingDto>(), new UpgradeActionDto());
+        newVillageDto.owner = village.owner; newVillageDto.upgradeAction1 = village.upgradeAction1.ToDto();
         List<Building>? buildings = await _buildingServices.GetIdentityAllBuildings(village); if( buildings != null) {
             foreach (Building b in buildings) {
                 newVillageDto.buildings.Add(_buildingServices.ToDto(b));
@@ -70,8 +71,8 @@ public class L4VillageServices {
         return null;
     }
 
-    public async Task<Village?> CreateNewVillage() {
-        Village newVillage = new Village();
+    public async Task<Village?> CreateNewVillage(string pOwner) {
+        Village newVillage = new Village(); newVillage.owner = pOwner;
         // attention, obligé de rajouter les batiments à chaque ajout de batiment. à changer..;
         List<Building> allBuildings = new List<Building> { new Hq(), new Scierie(), new Ferme(), new Mine(), new Entrepot(), new CampMilitaire(), new Caserne() };
         try {
@@ -133,7 +134,7 @@ public class L4VillageServices {
 
 
 
-    public async Task<bool> StartUpgradeBuildingAsync(ObjectId? villageId, BuildingType buildingType)
+    public async Task<UpgradeActionDto?> StartUpgradeBuildingAsync(ObjectId? villageId, BuildingType buildingType)
     {
         Village? village = await GetIdentityWithLock(villageId); if( village != null) {
             // upgrade building
@@ -145,7 +146,7 @@ public class L4VillageServices {
                         var result = await _buildings.ReplaceOneAsync(e => e._id == entrepot._id, entrepot); if(result.MatchedCount > 0) { 
                             var result2 = await _buildings.ReplaceOneAsync(b => b._id == building._id, building); if(result2.MatchedCount > 0) {
                                 var result3 = await _villages.ReplaceOneAsync(v => v._id == village._id, village); if(result3.MatchedCount > 0) {
-                                    await ReleaseLock(village); return true;
+                                    await ReleaseLock(village); return village.upgradeAction1.ToDto();
                                 }
                             }
                         }
@@ -155,7 +156,7 @@ public class L4VillageServices {
             }
             await ReleaseLock(village);
         }
-        return false;
+        return null;
     }
 
 

@@ -1,7 +1,8 @@
-using GameServer.DTOs;
+using Microsoft.AspNetCore.Mvc;
+using Warpath.Shared.Catalogue;
+using Warpath.Shared.DTOs;
 using GameServer.Models;
 using GameServer.Services;
-using Microsoft.AspNetCore.Mvc;
 
 namespace GameServer.Controllers;
 

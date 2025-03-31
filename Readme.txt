@@ -33,9 +33,11 @@ LES ENDPOINTS:
     Get basics informations about a mapTile if player have it in his vision (need token + playerName + location of the tile):  GET http://localhost:5245/api/user/{username}/player/{playerName}/map/{indexTile}/getOneTile
     Special endpoint for getting all the map:   GET http://localhost:5245/api/user/{username}/player/{playerName}/map/getAllMap
     Special endpoint for getting all villages:   GET http://localhost:5245/api/user/{username}/player/{playerName}/map/{index}/village/getAllVillages
-    Get all datas about a village if owned by the player (need token + playerName + mapLocation): GET http://localhost:5245/api/user/{username}/player/{playerName}/map/{indexTile}/village/getAllDatas
+    Get all datas about a village if owned by the player (need token + playerName + mapLocation): GET http://localhost:5245/api/user/{username}/player/{playerName}/map/{indexTile}/village/getVillageDatas
     
-    Upgrade a building inside a village if you are the owner of the village and if you have rss (need token + playerName + mapLocation + buildingType):  POST http://localhost:5245/api/user/{username}/player/{playerName}/map/{indexTile}/village/building/{buildingType}/upgradeBuilding   ( body: )
+    Start Upgrade a building inside a village if you are the owner of the village and if you have rss (need token + playerName + mapLocation + buildingType):  POST http://localhost:5245/api/user/{username}/player/{playerName}/map/{indexTile}/village/building/{buildingType}/startUpgradeBuilding   ( body: )
+    End Upgrade if time is finish (need token + playerName + villageLocation  ):  POST http://localhost:5245/api/user/{username}/player/{playerName}/map/{indexTile}/village/endUpgradeAction1   ( body: )
+
     Send soldiers training in caserne (need token + playerName + mapLocation + nSoldiers):   POST http://localhost:5245/api/user/{username}/player/{playerName}/map/{indexTile}/village/building/caserne/trainingTroops/{nSoldats}
     End training inside Caserne and send troops in CampMilitaire (need token + playerName + mapLocation):   POST http://localhost:5245/api/user/{username}/player/{playerName}/map/{indexTile}/village/building/caserne/endTraining
 

@@ -1,7 +1,10 @@
-using GameServer.DTOs;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.Mvc;
+using Warpath.Shared.Catalogue;
+using Warpath.Shared.DTOs;
 using GameServer.Models;
 using GameServer.Services;
-using Microsoft.AspNetCore.Mvc;
+using GameServer.Hubs;
 
 namespace GameServer.Controllers;
 
@@ -13,7 +16,7 @@ namespace GameServer.Controllers;
 public class L5BuildingController : ControllerBase {
     
     private readonly L1UserServices _userServices; private readonly L2PlayerServices _playerServices; private readonly L3MapServices _mapServices; private readonly L4VillageServices _villageServices; private readonly L5BuildingServices _buildingServices;
-    
+
     public L5BuildingController(L1UserServices userServices, L2PlayerServices playerServices, L3MapServices mapServices, L4VillageServices villageServices, L5BuildingServices buildingServices) {
         _userServices = userServices; _playerServices = playerServices; _mapServices = mapServices; _villageServices = villageServices; _buildingServices = buildingServices;
     }
@@ -60,9 +63,10 @@ public class L5BuildingController : ControllerBase {
             Player? player = await _playerServices.GetIdentityWithLock(user, playerName); if(player != null) {
                 MapTile? mapTile =  await _mapServices.GetIdentityOneTileWithLock(indexTile ?? -1); if (mapTile != null) {
                     if( mapTile.type == TileType.Village && _mapServices.OneTileIsOwnedByPlayer(player, mapTile) ) {
-                        if ( await _villageServices.StartUpgradeBuildingAsync(mapTile.dataId, buildingType ?? BuildingType.Hq) ) {
+                        UpgradeActionDto? resultUpgrade = await _villageServices.StartUpgradeBuildingAsync(mapTile.dataId, buildingType ?? BuildingType.Hq);
+                        if ( resultUpgrade != null) {
                             await _mapServices.OneTileReleaseLock(indexTile ?? -1);  await _playerServices.ReleaseLock(player);  await _userServices.ReleaseLock(user);
-                            return Ok($"Le batiment {buildingType} est maintenant en travaux.");
+                            return Ok(resultUpgrade);
                         }
                     }
                     await _mapServices.OneTileReleaseLock(indexTile ?? 0);
@@ -87,7 +91,7 @@ public class L5BuildingController : ControllerBase {
                         Village? village = await _villageServices.GetIdentityWithLock(mapTile.dataId); if(village != null) {
                             int nRessources = await _buildingServices.RecoltAsync(village, buildingType ?? BuildingType.Hq); if(nRessources != int.MaxValue) {
                                 await _villageServices.ReleaseLock(village); await _mapServices.OneTileReleaseLock(indexTile ?? -1); await _playerServices.ReleaseLock(player); await _userServices.ReleaseLock(user);
-                                return Ok($"Le batiment {buildingType} a été récolté. L'entrepot contient maintenant {nRessources}.");
+                                return Ok(nRessources);
                             }
                             await _villageServices.ReleaseLock(village);
                         }
@@ -110,9 +114,9 @@ public class L5BuildingController : ControllerBase {
                 MapTile? mapTile =  await _mapServices.GetIdentityOneTileWithLock(indexTile ?? -1); if (mapTile != null) {
                     if( mapTile.type == TileType.Village && _mapServices.OneTileIsOwnedByPlayer(player, mapTile)) {
                         Village? village = await _villageServices.GetIdentityWithLock(mapTile.dataId); if(village != null) {
-                            bool sucessTraining = await _buildingServices.TrainingAsync(village, nSoldats ?? 0); if(sucessTraining == true) {
+                            (bool sucessTraining, DateTime endAt) = await _buildingServices.TrainingAsync(village, nSoldats ?? 0); if(sucessTraining == true) {
                                 await _villageServices.ReleaseLock(village); await _mapServices.OneTileReleaseLock(indexTile ?? -1); await _playerServices.ReleaseLock(player); await _userServices.ReleaseLock(user);
-                                return Ok($"Le caserne a commencé à entrainer {nSoldats} avec succes.");
+                                return Ok((nSoldats, endAt));
                             }
                             await _villageServices.ReleaseLock(village);
                         }

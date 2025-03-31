@@ -1,14 +1,13 @@
 using MongoDB.Bson.Serialization.Attributes;
 using Newtonsoft.Json.Linq;
-using GameServer.Catalogue;
-using GameServer.DTOs;
 using MongoDB.Bson;
-using Microsoft.AspNetCore.Http.Features;
+using Warpath.Shared.Catalogue;
+using Warpath.Shared.DTOs;
 
 namespace GameServer.Models;
 
 
-
+// Here, when add or remove a Building, dont forget to actualize BsonKnownTypes, BsonDiscriminator and CreateVillage
 
 
 [BsonDiscriminator(Required = true)]
@@ -212,8 +211,3 @@ public class Caserne : Building {
 }
 
 
-
-
-
-
-public enum BuildingType { Hq = 0, Scierie = 1, Ferme = 2, Mine = 3, Entrepot = 4, CampMilitaire = 5, Caserne = 6 }
